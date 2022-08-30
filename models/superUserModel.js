@@ -11,6 +11,18 @@ const superUserSchema = extendSchema(
       type: String,
       default: 'default',
     },
+    pin: {
+      type: String,
+      required: [true, 'Please enter your pin'],
+      minlength: [4, 'Pin should be minimum 4 digits long'],
+      validate: {
+        validator: function (arr) {
+          return !isNaN(arr);
+        },
+        message: 'Please enter valid pin (0-9)',
+      },
+      select: false,
+    },
   },
   { collection: 'superuser' }
 );

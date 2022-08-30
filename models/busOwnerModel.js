@@ -67,6 +67,18 @@ const busOwnerSchema = extendSchema(baseUserModel.schema, {
     unique: true,
     validate: [validator.isEmail, 'Please enter a valid email'],
   },
+  pin: {
+    type: String,
+    required: [true, 'Please enter your pin'],
+    minlength: [4, 'Pin should be minimum 4 digits long'],
+    validate: {
+      validator: function (arr) {
+        return !isNaN(arr);
+      },
+      message: 'Please enter valid pin (0-9)',
+    },
+    select: false,
+  },
 });
 Object.assign(busOwnerSchema.methods, baseUserModel.schema.methods);
 

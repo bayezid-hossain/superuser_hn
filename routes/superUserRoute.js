@@ -35,12 +35,6 @@ router
     registerSuperUser
   );
 
-// admin login
-router.route('/api/v1/admin/login').post(loginSuperUser);
-
-//verify login otp for admin
-router.route('/api/v1/admin/verify').post(isAuthenticatedUser, verifyOtp);
-
 //get admin details
 router.route('/api/v1/admin/me').get(isLoggedInUser, getUserDetails);
 
