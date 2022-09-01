@@ -35,6 +35,12 @@ const busOwnerSchema = extendSchema(baseUserModel.schema, {
       ref: 'Driver',
     },
   ],
+  buses: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Bus',
+    },
+  ],
   routes: [
     {
       type: mongoose.Schema.ObjectId,
@@ -60,13 +66,6 @@ const busOwnerSchema = extendSchema(baseUserModel.schema, {
     type: String,
     default: 'bkash',
   },
-  email: {
-    type: String,
-    required: [true, 'Please Enter Your Email'],
-    maxlength: [30, 'Email cannot exceed 30 letters'],
-    unique: true,
-    validate: [validator.isEmail, 'Please enter a valid email'],
-  },
   pin: {
     type: String,
     required: [true, 'Please enter your pin'],
@@ -78,6 +77,13 @@ const busOwnerSchema = extendSchema(baseUserModel.schema, {
       message: 'Please enter valid pin (0-9)',
     },
     select: false,
+  },
+  email: {
+    type: String,
+    required: [true, 'Please Enter Your Email'],
+    maxlength: [30, 'Email cannot exceed 30 letters'],
+    unique: true,
+    validate: [validator.isEmail, 'Please enter a valid email'],
   },
 });
 Object.assign(busOwnerSchema.methods, baseUserModel.schema.methods);
