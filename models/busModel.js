@@ -12,6 +12,10 @@ const busSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  owner: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'busOwner',
+  },
   engineNumber: {
     type: String,
     unique: [true, 'This Engine Number Already Exists'],

@@ -151,7 +151,8 @@ exports.approveBusOwner = catchAsyncErrors(async (req, res, next) => {
     user.TINCertificate &&
     user.companyName &&
     user.tradeLicense &&
-    user.bKashNumber &&
+    user.merchantType &&
+    user.merchantNumber &&
     user.busOwnerImage
   ) {
     user.approvalStatus = req.body.approvalStatus;
@@ -237,6 +238,31 @@ exports.approveRoute = catchAsyncErrors(async (req, res, next) => {
     success: true,
     message: 'Approved Route',
     route,
+  });
+});
+
+exports.approveBus = catchAsyncErrors(async (req, res, next) => {
+  const profiler = logger.startTimer();
+  const bus = await Bus.findById(req.params.id);
+  if (!bus) {
+    return next(
+      new ErrorHandler(`No Bus found with the id : ${req.params.id}`, 400)
+    );
+  }
+
+  bus.approvalStatus = req.body.approvalStatus;
+  await route.save({ validateBeforeSave: false });
+
+  profiler.done({
+    message: `Bus ${bus.name} with ID: ${req.params.id} was ${req.body.approvalStatus}`,
+
+    level: 'info',
+    actionBy: req.user.id,
+  });
+  res.status(200).json({
+    success: true,
+    message: 'Approved Route',
+    bus,
   });
 });
 
@@ -367,6 +393,22 @@ exports.getAllRoutes = catchAsyncErrors(async (req, res, next) => {
     routes,
   });
 });
+//get all buses
+
+exports.getAllBuses = catchAsyncErrors(async (req, res, next) => {
+  const profiler = logger.startTimer();
+  const buses = await Bus.find().populate('owner', 'companyName');
+
+  profiler.done({
+    message: `All buses information was requested`,
+    level: 'info',
+    actionBy: req.user.id,
+  });
+  res.status(200).json({
+    success: true,
+    buses,
+  });
+});
 
 //get single driver information
 exports.getDriver = catchAsyncErrors(async (req, res, next) => {
@@ -432,6 +474,27 @@ exports.getRoute = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     route,
+  });
+});
+//get single bus information
+exports.getBus = catchAsyncErrors(async (req, res, next) => {
+  const profiler = logger.startTimer();
+  const bus = await Bus.findById(req.params.id);
+  if (!bus) {
+    return next(
+      new ErrorHandler(`No route found with the id : ${req.params.id}`, 400)
+    );
+  }
+
+  profiler.done({
+    message: `Information of bus: ${bus.name}-${req.params.id} was requested`,
+
+    level: 'info',
+    actionBy: req.user.id,
+  });
+  res.status(200).json({
+    success: true,
+    bus,
   });
 });
 
@@ -514,6 +577,26 @@ exports.deleteRoute = catchAsyncErrors(async (req, res, next) => {
   }
   profiler.done({
     message: `Deleted Route ${req.params.id}`,
+
+    level: 'warning',
+    actionBy: req.user.id,
+  });
+  res.status(200).json({
+    success: true,
+  });
+});
+//delete bus
+exports.deleteBus = catchAsyncErrors(async (req, res, next) => {
+  const profiler = logger.startTimer();
+  try {
+    await Bus.deleteOne({
+      _id: req.params.id,
+    });
+  } catch (error) {
+    //console.log(error);
+  }
+  profiler.done({
+    message: `Deleted Bus ${req.params.id}`,
 
     level: 'warning',
     actionBy: req.user.id,

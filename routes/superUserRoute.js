@@ -16,6 +16,10 @@ const {
   getRoute,
   deleteRoute,
   getAllRoutes,
+  approveBus,
+  getBus,
+  deleteBus,
+  getAllBuses,
   logout,
 } = require('../controllers/superUserController');
 const {
@@ -64,6 +68,14 @@ router
     [approvalStatus('approved'), authorizeRoles('[admin]')],
     approveRoute
   );
+//approve route
+router
+  .route('/api/v1/admin/approvebus/:id')
+  .post(
+    isLoggedInUser,
+    [approvalStatus('approved'), authorizeRoles('[admin]')],
+    approveBus
+  );
 
 //get all bus owners
 router
@@ -89,6 +101,15 @@ router
     isLoggedInUser,
     [approvalStatus('approved'), authorizeRoles('[admin]')],
     getAllRoutes
+  );
+
+//get all buses
+router
+  .route('/api/v1/admin/buses')
+  .get(
+    isLoggedInUser,
+    [approvalStatus('approved'), authorizeRoles('[admin]')],
+    getAllBuses
   );
 
 //get single bus owner details
@@ -118,6 +139,15 @@ router
     getRoute
   );
 
+//get single bus details
+router
+  .route('/api/v1/admin/bus/:id')
+  .get(
+    isLoggedInUser,
+    [approvalStatus('approved'), authorizeRoles('[admin]')],
+    getBus
+  );
+
 //delete bus owner
 router
   .route('/api/v1/admin/owner/remove/:id')
@@ -143,6 +173,14 @@ router
     isLoggedInUser,
     [approvalStatus('approved'), authorizeRoles('[admin]')],
     deleteRoute
+  );
+//delete bus
+router
+  .route('/api/v1/admin/bus/remove/:id')
+  .delete(
+    isLoggedInUser,
+    [approvalStatus('approved'), authorizeRoles('[admin]')],
+    deleteBus
   );
 
 router.route('/api/v1/admin/logout').get(isLoggedInUser, logout);
