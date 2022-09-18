@@ -4,8 +4,6 @@ const {
   approveDriver,
   getUserDetails,
   registerSuperUser,
-  loginSuperUser,
-  verifyOtp,
   getAllBusOwners,
   getAllDrivers,
   getOwner,
@@ -20,7 +18,6 @@ const {
   getBus,
   deleteBus,
   getAllBuses,
-  logout,
 } = require('../controllers/superUserController');
 const {
   authorizeRoles,
@@ -183,5 +180,4 @@ router
     deleteBus
   );
 
-router.route('/api/v1/admin/logout').get(isLoggedInUser, logout);
 module.exports = router;

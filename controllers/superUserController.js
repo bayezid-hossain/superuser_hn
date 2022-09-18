@@ -9,31 +9,6 @@ const sendToken = require('../utils/jwtToken');
 const { generateOtp, sendOtp } = require('../utils/sendSms');
 const axios = require('axios');
 const logger = require('../logger/index');
-// let channel;
-// //rabbitmq queue creation
-// async function connect() {
-//   const amqpServer = process.env.RABBITMQ_URL;
-//   const connection = await amqp.connect(amqpServer);
-//   channel = await connection.createChannel();
-//   await channel.assertQueue('ADDEDDRIVER');
-// }
-// connect();
-
-// createDemoSU = async () => {
-//   const user = await User.create({
-//     name: 'Bayezid',
-//     phone: '01918139757',
-//     pin: '3362',
-//     email: 'me.bayezid@gmail.com',
-//     role: 'admin',
-//     approvalStatus: 'approved',
-//   });
-// };
-
-// createDemoSU().then(() => {
-//   console.log('Created Demo SU');
-// });
-
 //Register a superuser
 exports.registerSuperUser = catchAsyncErrors(async (req, res, next) => {
   const profiler = logger.startTimer();
@@ -58,64 +33,6 @@ exports.registerSuperUser = catchAsyncErrors(async (req, res, next) => {
     level: 'warning',
     actionBy: req.user.id,
   });
-});
-
-//login module for superuser
-exports.loginSuperUser = catchAsyncErrors(async (req, res, next) => {
-  //checking if user has given pin and phone both
-
-  const profiler = logger.startTimer();
-  const { email, phone, pin } = req.body;
-  if (!email && !phone) {
-    return next(new ErrorHandler('Invalid login information', 400));
-  }
-
-  let user = phone
-    ? await User.findOne({
-        phone,
-      }).select('+pin')
-    : await User.findOne({ email }).select('+pin');
-
-  if (!user) {
-    return next(new ErrorHandler('Invalid login information', 401));
-  }
-  const ispinMatched = await user.comparepin(pin);
-
-  if (!ispinMatched) {
-    profiler.done({
-      message: `Invalid pin given for ${
-        phone ? 'phone number : ' + phone : 'email : ' + email
-      }`,
-      level: 'warning',
-      actionBy: req.user.id,
-    });
-    return next(new ErrorHandler('Invalid login information', 401));
-  }
-  const otp = generateOtp();
-  const update = {
-    otp: otp,
-    otpExpire: Date.now() + 5 * 60000,
-  };
-
-  user = phone
-    ? await User.findOneAndUpdate({ phone }, update, {
-        new: true,
-        runValidators: true,
-        useFindAndModify: false,
-      }).select('id otp phone name')
-    : await User.findOneAndUpdate({ email }, update, {
-        new: true,
-        runValidators: true,
-        useFindAndModify: false,
-      }).select('id otp phone name'); //sending otp for testing purposes
-  //console.log(jk.otp);
-
-  profiler.done({
-    message: `User ${user.name} (${user.phone}) requested login otp`,
-    level: 'info',
-  });
-  sendOtp(user.phone, otp);
-  sendToken(user, 200, res);
 });
 
 //ADMIN module, approves bus owner after checking everything, needs to be an ADMIN, will be shifted when superuser module is ready
@@ -266,62 +183,6 @@ exports.approveBus = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-//verify OTP for superuser
-exports.verifyOtp = catchAsyncErrors(async (req, res, next) => {
-  const profiler = logger.startTimer();
-  if (!req.user) {
-    return next(new ErrorHandler('Unauthorized request'));
-  }
-  const id = req.user.id;
-  const user = await User.findOne({
-    id: id,
-    otpExpire: { $gt: Date.now() },
-  });
-  if (!user) {
-    return next(new ErrorHandler('Otp is invalid or has expired', 400));
-  }
-  if (req.body.otp !== user.otp) {
-    profiler.done({
-      message: `Invalid otp tried for ${user.name} (${user.phone}) !`,
-      level: 'warning',
-    });
-    return next(new ErrorHandler('Otp is invalid or has expired', 400));
-  }
-
-  user.otp = undefined;
-  user.otpExpire = undefined;
-  user.loggedIn = true;
-  await user.save({ validateBeforeSave: false });
-  profiler.done({
-    message: `User ${user.name} (${user.phone}) logged in!`,
-    level: 'warning',
-  });
-  sendToken(user, 200, res);
-});
-
-exports.logout = catchAsyncErrors(async (req, res, next) => {
-  const profiler = logger.startTimer();
-  const user = req.user;
-  const id = user.id;
-  if (user) {
-    user.loggedIn = false;
-    user.save({ validateBeforeSave: false });
-  }
-
-  res.cookie('token', null, {
-    expires: new Date(Date.now()),
-    httpOnly: true,
-  });
-  res.status(200).json({
-    success: true,
-    message: 'Logged out',
-  });
-  profiler.done({
-    message: 'Logged Out',
-    level: 'info',
-    actionBy: id,
-  });
-});
 //get personal info of logged in user
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   const profiler = logger.startTimer();
@@ -416,6 +277,12 @@ exports.getDriver = catchAsyncErrors(async (req, res, next) => {
   const user = await Driver.findById(req.params.id);
 
   if (!user) {
+    profiler.done({
+      message: `Information of Authority: ${user.name}-${req.params.id} was requested but not found`,
+
+      level: 'info',
+      actionBy: req.user.id,
+    });
     return next(
       new ErrorHandler(`No user found with the id : ${req.params.id}`, 400)
     );
@@ -438,6 +305,12 @@ exports.getOwner = catchAsyncErrors(async (req, res, next) => {
   const profiler = logger.startTimer();
   const user = await BusOwner.findById(req.params.id);
   if (!user) {
+    profiler.done({
+      message: `Information of Authority: ${user.name}-${req.params.id} was requested but not found`,
+
+      level: 'info',
+      actionBy: req.user.id,
+    });
     return next(
       new ErrorHandler(`No user found with the id : ${req.params.id}`, 400)
     );
